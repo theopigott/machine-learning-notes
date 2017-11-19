@@ -1,0 +1,223 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{amsthm, amssymb, amsmath, ulsy}
+\usepackage{mathtools}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage{graphicx, color}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\theoremstyle{definition}
+\newtheorem*{theorem}{Theorem}
+\newtheorem*{lemma}{Lemma}
+\newtheorem*{prop}{Proposition}
+\newtheorem*{cor}{Corollary}
+\newtheorem*{defn}{Definition}
+\newtheorem*{rem}{Remark}
+\newtheorem*{ex}{Example}
+\newtheorem*{notn}{Notation}
+
+\setenumerate{label=(\roman*)}
+
+%probability
+\renewcommand{\Pr}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+%blackboard sets
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\N}{\mathbb{N}}
+%set
+\providecommand\given{} % so it exists
+\newcommand\SetSymbol[1][]{
+   \nonscript\,#1: \allowbreak \nonscript\,\mathopen{}}
+\DeclarePairedDelimiterX\Set[1]{\lbrace}{\rbrace}%
+ { \renewcommand\given{\SetSymbol[\delimsize]} #1 }
+\renewcommand{\given}{\mid}
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newcommand{\gv}[1]{\ensuremath{\mbox{\boldmath$ #1 $}}} % for vectors of Greek letters
+\newcommand{\grad}[1]{\gv{\nabla} #1} % for gradient
+\let\divsymb=\div % rename builtin command \div to \divsymb
+\renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}}
+
+\title{Machine Learning}
+\author{Lectured by Andrew Ng on Coursera}
+\date{2017}
+
+\usepackage{fancyhdr}
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \fancyfoot[L]{\small{\emph{Notes by Theo Pigott}}}% Left footer
+  \fancyfoot[R]{\thepage}
+}
+\pagestyle{plain}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\begin{defn}[Machine Learning - Tom Mitchell, 1998]
+A computer program is said to \emph{learn} from experience $E$ with respect to
+some task $T$ and some performance measure $P$, if its performance on $T$,
+as measured by $P$, improves with experience $E$.
+\end{defn}
+
+\section{Linear Regression}
+
+\begin{notn}[Training data]
+We have a set of training examples, denoted by $x \in \R^{n} \times \R^{m}$ ($m$ examples of $n$ features). Concretely, $x^{(i)}$ denotes the features of the $i^{th}$ training example, with $x^{(i)}_{j}$ being the value of feature $j$ in the $i^{th}$ training example. 
+
+Conventionally, we take an extra row of ones as the $0^{th}$ feature ($x_0 := 1$) and denote the corresponding $(m+1) \times n$ matrix $X$ the \emph{design matrix}. 
+
+The output variable is $y \in \R^{m}$.
+\end{notn}
+
+\begin{defn}[Linear hypothesis]
+Our hypothesis is 
+\[
+h_{\theta}(x) = \theta^T X
+\] where $\theta \in \R^{n+1}$ is a vector of parameters to be estimated.
+\end{defn}
+
+\begin{defn}[Squared Loss Cost Function]
+The \emph{cost function} 
+\begin{align*}
+J(\theta) &= \frac{1}{2m} \sum_{i=1}^{m}{ \left( h_{\theta}(x^{i}) - y^{i}\right)^{2} } \\
+&= \frac{1}{2m} (\theta^{T} X - y)^{T} (\theta^{T} X - y) 
+\end{align*}
+represents a measure of the fit of a particular choice of parameters $\theta$.
+\end{defn}
+
+We estimate $\theta$ as the value minimising $J(\theta)$.
+
+\subsection{Gradient Descent}
+\emph{Gradient descent} involves following the gradient of this cost function to find its minimum. In practice, taking an initial estimate $\theta_0$ and \emph{learning rate} $\alpha$ we iteratively compute
+\[
+\theta := \theta - \alpha \grad J
+\]
+that is
+\[
+\theta_j := \theta_j - \alpha \frac{\partial}{\partial \theta_j} J(\theta)
+\]
+for $j \in \Set{0, \ldots, n+1}$.
+
+For linear regression,
+\begin{align*}
+\frac{\partial}{\partial \theta_j} J(\theta) &= \frac{1}{m} \sum_{i=1}^{m}{ \left( h_{\theta}(x^{i}) - y^{i}\right) x^{(i)}_j } \\
+&= \frac{1}{m} X (\theta^T X - y)
+\end{align*}
+
+
+We declare convergence when $J(\theta)$ decreases by less than $\epsilon$ in a single iteration.
+
+The learning rate $\alpha$ must be chosen carefully. Too large and convergence may not occur, too small and convergence will be slow.
+
+\subsubsection{Feature scaling}
+We can speed up gradient descent via \emph{feature scaling} and \emph{mean normalization}. Intuitively, this involves scaling each feature so that the steps taken along the gradient are roughly uniform across the dimensions of the feature space. Concretely, we set
+\[
+x = \frac{x - \mu}{\sigma}
+\]
+where $\mu$ is the (row-wise) mean of $x$ and $\sigma$ is the (row-wise) standard deviation of $x$.
+
+\subsection{Analytic solution}
+The minimum of the cost function can also be found analytically (solve the system of equations $\grad J = 0$ to obtain the exact solution
+\[
+\theta = (X^T X)^{-1} X^T y
+\]
+in the cast where $(X^T X)$ is invertible. Even in the singular case, we can take a numerical solution with the pseudo-inverse, e.g. via the Octave function \verb!pinv!. The singular case can occur when there are redundant (linearly dependent) features, or too many features ($m \leq n$).
+
+\section{Logistic Regression - Classification}
+We now restrict $y \in \Set{0, 1}^{m}$ so that we now have the problem of \emph{classifying} an observation $x$.
+
+\begin{defn}[Classification hypothesis]
+Our hypothesis is 
+\begin{align*}
+h_{\theta}(x) &= g(\theta^T x) \\
+&= \frac{1}{1 + e^{-\theta^{T} x}}
+\end{align*}
+where $g(z)$ is the \emph{sigmoid} function, so that $0 \leq h_{\theta}(x) \leq 1$. We interpret
+\begin{align*}
+h_{\theta}(x) &= \Pr_{\theta}(y = 1 \given x) \\
+&= \Pr(y = 1 \given x, \theta)
+\end{align*}
+and `predict' that $y = 1$ if $h_{\theta}(x) >= 0.5$, i.e. if $\theta^{T} x >= 0$. The surface $h_{\theta}(x) = 0.5$ is known as the \emph{decision boundary}.
+\end{defn}
+
+The squared loss cost function is not convex in the case of logistic regression, we instead use the logistic cost function. 
+\begin{defn}[Logistic Cost function]
+The \emph{logistic} cost function is
+\[
+J(\theta) = \frac{1}{m} \sum_{i=1}^{m} \mathrm{Cost}(h_{\theta}(x^{(i)}), y^{(i)})
+\]
+where
+\begin{align*}
+\mathrm{Cost}(h_{\theta}(x), y) & = 
+\begin{cases}
+-\log(h_{\theta}(x)) & \text{for } y = 1 \\
+-(1 - \log(h_{\theta}(x))) & \text{for } y = 0
+\end{cases} \\
+& = - y \log(h_{\theta}(x)) - (1 - y)(1 - \log(h_{\theta}(x)))
+\end{align*}
+\end{defn}
+
+This form of cost function can be derived from \emph{maximum likelihood estimation} for the binomial distribution.
+
+Gradient descent applies in the same way, and moreover we again find that
+\[
+\frac{\partial}{\partial \theta_j} J(\theta) = \frac{1}{m} \sum_{i=1}^{m}{ \left( h_{\theta}(x^{i}) - y^{i}\right) x^{(i)}_j }
+\]
+though of course with the new hypothesis function.
+
+\subsubsection{Advanced optimization}
+There exist other, more complex algorithms to minimum the cost function, such as
+\begin{enumerate}
+\item Conjugate gradient
+\item BFGS
+\item L-BFGS
+\end{enumerate}
+which don't involve picking a learning rate and are often faster.
+
+\subsection{Multiclass classification}
+For the case of classifying $y \in \Set{1, \ldots, k}$ we can apply the principle of \emph{one-vs-all} to train $k$ classifiers $h_{\theta}^{(i)}$ each of which is predicting the probability $\Pr_{\theta}(y = i \given x)$ (against all other classes). The final prediction is then taken as the class $i$ maximising $h_{\theta}^{(i)}$.
+
+\subsection{Addressing overfitting}
+With too many features, the learned hypothesis may fit the training set very well $(J(\theta) \approx 0$ but fail to generalize to new examples. This is known as \emph{overfitting}.
+
+This can be addressed by reducing the number of features (manually or alorithmically), or via regularization. 
+
+\subsubsection{Regularization}
+The idea is too keep all features, but reduce the magnitude of the parameters $\theta_j$. This works well when there are lots of features, each contributing a bit to predicting $y$.
+
+To achieve this, we \emph{penalize} the parameters inside the cost function.
+
+For \emph{linear regression}, we have
+\[
+J(\theta) = \frac{1}{2m} \left[ \sum_{i=1}^{m}{ \left( h_{\theta}(x^{i}) - y^{i}\right)^{2} } + \lambda \sum_{j=1}^{m} \theta_j^2 \right]
+\]
+N.B. we conventionally do not penalize $\theta_0$, so it is excluded from the sum.
+
+The analytic solution is then
+\[
+\theta = \left( X^T X + \lambda 
+\begin{bmatrix}
+0 &  &  &  & \\ 
+ & 1 &  &  & \\ 
+ &  & 1 &  & \\ 
+ &  &  & \ddots & \\ 
+ &  &  &  & 1
+\end{bmatrix}
+\right)^{-1} X^T y
+\]
+which does not suffer from the problem of non-invertibility.
+
+For \emph{logistic regression}, we have
+\[
+J(\theta) = \frac{1}{m} \sum_{i=1}^{m} \left[ - y \log(h_{\theta}(x^{(i)})) - (1 - y)(1 - \log(h_{\theta}(x^{(i)}))) \right] + \frac{\lambda}{2m} \sum_{j=1}^{m} \theta_j^2
+\]
+
+As with the learning rate, $\lambda$ must be appropriately chosen: too small and the regulation will have little effect, but too large will lead to \emph{underfitting}!
+\end{document}
