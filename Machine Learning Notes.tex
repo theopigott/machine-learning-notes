@@ -6,7 +6,9 @@
 \usepackage{graphicx, color}
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem}
-\usepackage{caption}
+\usepackage[justification=centering]{caption}
+\usepackage{tikz}
+
 \theoremstyle{definition}
 \newtheorem*{theorem}{Theorem}
 \newtheorem*{lemma}{Lemma}
@@ -228,7 +230,63 @@ The neuron model mimics the biological neuron: depending on some \emph{activatio
 
 The activation function is the sigmoid logistic function $g(z) = \frac{1}{1 + e^{-z}}$. Thus, each layer is a series of logistic regression models trained on the previous layer (to which we also add a \emph{bias unit} of constant value $1$).
 
-The first layer is the actual \emph{input} to the model, the last layer the \emph{output}, while the intermediate layers are known as \emph{hidden layers}.
+The first layer is the actual \emph{input} to the model, the last layer the \emph{output}, while the intermediate layers are known as \emph{hidden layers}. See Figure \ref{nn-rep}.
+
+\def\layersep{2.5cm}
+
+\begin{figure}
+\centering
+\caption{Representation of Neural Network \protect\footnotemark}
+\label{nn-rep}
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+    \tikzstyle{neuron}=[circle,fill=black!25,minimum size=20pt,inner sep=0pt]
+    \tikzstyle{input neuron}=[neuron, fill=green!50];
+    \tikzstyle{output neuron}=[neuron, fill=red!50];
+    \tikzstyle{hidden neuron}=[neuron, fill=blue!50];
+    \tikzstyle{annot} = [text width=4em, text centered]
+
+    % Nodes
+    % Layer 1
+    % Bias unit
+    \node[input neuron, pin=left:Bias Unit] (I-0) at (0,0) {$x_0$};
+    % Inputs
+    \foreach \name / \y in {1,...,3}
+        \node[input neuron, pin=left:Input Feature \y] (I-\name) at (0,-\y) {$x_\y$};
+
+    % Layer 2
+    % Bias unit
+    \path[yshift=0.5cm] node[hidden neuron] (H-0) at (\layersep,0) {$a^{(2)}_0$};
+    % Hidden layer
+    \foreach \name / \y in {1,...,4}
+        \path[yshift=0.5cm] node[hidden neuron] (H-\name) at (\layersep,-\y cm) {$a^{(2)}_\y$};
+
+    % Layer 3
+    % Draw the output layer node
+    \node[output neuron,pin={[pin edge={->}]right:Output $h_{\Theta}(x)$}, right of=H-2] (O) {$a^{(3)}_1$};
+
+
+    % Edges
+    % Layer 1 -> Layer 2
+    \foreach \dest in {1,...,4}
+        \path (I-0) edge [dashed] (H-\dest);
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,4}
+            \path (I-\source) edge (H-\dest);
+            
+    % Layer 2 -> Layer 3
+    \path (H-0) edge [dashed] (O);
+    \foreach \source in {1,...,4}
+        \path (H-\source) edge (O);
+
+    % Layer labels
+    \node[annot,above of=H-0, node distance=1cm] (hl) {Hidden layer};
+    \node[annot,left of=hl] {Input layer};
+    \node[annot,right of=hl] {Output layer};
+\end{tikzpicture}
+\end{figure}
+
+\footnotetext{adapted from http://www.texample.net/tikz/examples/neural-network/}
 
 \subsection{Forward propagation}
 \emph{Forward propagation} describes the method by which, given a trained neural network, we can compute predictions.
@@ -245,7 +303,7 @@ a_i^{(j)} = g\left(\sum_{k=1}^{m} \Theta_{ik}^{(j)} a_k^{(j-1)} \right)
 
 for $i = 1, \ldots, s_j$, and at each layer we also add the bias unit $a_0^{(j)} := 0$. In vectorized form, $a^{(j)} = g(\Theta^{(j)} a^{(j-1)})$.
 
-If there are $\ell$ layers, then $h_\Theta(x) = a^{(l)}$.
+If there are $L$ layers, then $h_\Theta(x) = a^{(L)}$.
 
 \subsection{Examples of neural networks}
 As illustration of how neural networks can represent more advanced models than simple linear or logistic regression, we consider (approximate) representations of well-known binary operations.
