@@ -230,14 +230,13 @@ The neuron model mimics the biological neuron: depending on some \emph{activatio
 
 The activation function is the sigmoid logistic function $g(z) = \frac{1}{1 + e^{-z}}$. Thus, each layer is a series of logistic regression models trained on the previous layer (to which we also add a \emph{bias unit} of constant value $1$).
 
-The first layer is the actual \emph{input} to the model, the last layer the \emph{output}, while the intermediate layers are known as \emph{hidden layers}. See Figure \ref{nn-rep}.
-
-\def\layersep{2.5cm}
+The first layer is the actual \emph{input} to the model, the last layer the \emph{output}, while the intermediate layers are known as \emph{hidden layers}. See Figure \ref{nn-rep}\footnote{adapted from http://www.texample.net/tikz/examples/neural-network/}.
 
 \begin{figure}
 \centering
-\caption{Representation of Neural Network \protect\footnotemark}
+\caption{Representation of Neural Network}
 \label{nn-rep}
+\def\layersep{2.5cm}
 \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
     \tikzstyle{neuron}=[circle,fill=black!25,minimum size=20pt,inner sep=0pt]
@@ -286,24 +285,25 @@ The first layer is the actual \emph{input} to the model, the last layer the \emp
 \end{tikzpicture}
 \end{figure}
 
-\footnotetext{adapted from http://www.texample.net/tikz/examples/neural-network/}
-
 \subsection{Forward propagation}
 \emph{Forward propagation} describes the method by which, given a trained neural network, we can compute predictions.
 
-Let $x_1, \ldots, x_m$ be the training data, to which we add $x_0 := 1$. Set $\vec{a}^{(1)} := \vec{x}$. 
+Consider a neural network with $L$ layers, with $s_j$ units in layer $j$.
 
-Let $\Theta^{(j)}$ be the parameters (weights) of the mapping between layers $j$ and $(j+1)$, so that the $i\textsuperscript{th}$ row of $\Theta^{(j)}$ is the logistic regression parameters for the $i\textsuperscript{th}$ unit in layer $(j+1)$. Thus if there are $s_j$ units in layer $j$, then $\Theta^{(j)}$ is of dimension $S_{j+1} \times (S_{j} + 1)$.
+Let $x_1, \ldots, x_{s_0}$ be the training data, to which we add $x_0 := 1$. Set $a^{(1)} := x$. 
+
+Let $\Theta^{(j)}$ be the parameters (weights) of the mapping between layers $j$ and $(j+1)$, so that the $i\textsuperscript{th}$ row of $\Theta^{(j)}$ is the logistic regression parameters for the $i\textsuperscript{th}$ unit in layer $(j+1)$. Thus $\Theta^{(j)}$ is of dimension $s_{j+1} \times (s_{j} + 1)$.
 
 The \emph{activation} of unit $i$ in layer $j$, is given by
 
 \[
-a_i^{(j)} = g\left(\sum_{k=1}^{m} \Theta_{ik}^{(j)} a_k^{(j-1)} \right)
+a_i^{(j)} = g(\Theta^{(j-1)} a^{(j-1)})
 \]
 
-for $i = 1, \ldots, s_j$, and at each layer we also add the bias unit $a_0^{(j)} := 0$. In vectorized form, $a^{(j)} = g(\Theta^{(j)} a^{(j-1)})$.
+for $i = 1, \ldots, s_j$, and at each layer we also add the bias unit $a_0^{(j)} := 0$. The output is $h_\Theta(x) = a^{(L)}$ (which may be multi-dimensional).
 
-If there are $L$ layers, then $h_\Theta(x) = a^{(L)}$.
+\subsection{Multiclass classification}
+Given labels $\Set{1, \ldots, K}$, we model label $k$ as the unit coordinate vector for dimension $k$ - that is a vector with $1$ in dimension $k$, and $0$ in all other dimensions.
 
 \subsection{Examples of neural networks}
 As illustration of how neural networks can represent more advanced models than simple linear or logistic regression, we consider (approximate) representations of well-known binary operations.
@@ -334,8 +334,50 @@ and
 \Theta^{(2)} = \begin{pmatrix} -10 & 20 & 20\end{pmatrix}
 \]
 
-which is taking the hidden layer activations as $a_1^{(2)} = x_1 \land x_2$ and $a_2^{(2)} = (\lnot x_1) \land (\lnot x_2)$, and the output is $y = h_{\Theta}(x) = a_1^{(3)} = a_1^{(2)} \lor a_2^{(2)}$. See Table \ref{xnor-net}.
+which is taking the hidden layer activations as $a_1^{(2)} = x_1 \land x_2$ and $a_2^{(2)} = (\lnot x_1) \land (\lnot x_2)$, and the output is $y = h_{\Theta}(x) = a_1^{(3)} = a_1^{(2)} \lor a_2^{(2)}$. See Figure \ref{xnor-rep} and Table \ref{xnor-net}.
 \end{ex}
+
+\begin{figure}
+\centering
+\caption{XNOR Neural Network}
+\label{xnor-rep}
+\def\layersep{2.5cm}
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+    \tikzstyle{neuron}=[circle,fill=black!25,minimum size=20pt,inner sep=0pt]
+    \tikzstyle{edge label}=[near start, above, font=\footnotesize, inner sep=2pt];
+	
+    \def\nodesep{1.5 cm}
+    % Nodes
+    % Layer 1
+    \node[neuron] (I-0) at (0,0) {$+1$};
+    \foreach \name / \y in {1,2}
+        \node[neuron] (I-\name) at (0,-\y * \nodesep) {$x_\y$};
+
+    % Layer 2
+    \node[neuron] (H-0) at (\layersep,0) {$+1$};
+    \foreach \name / \y in {1,2}
+        \node[neuron] (H-\name) at (\layersep,-\y * \nodesep) {$a^{(2)}_\y$};
+
+    % Layer 3
+    \node[neuron,pin={[pin edge={->}]right:$x_1 \oplus x_2$}, right of=H-1] (O) {$a^{(3)}_1$};
+
+    % Edges
+    % Theta 1
+    \path (I-0) edge node[edge label] {$-30$} (H-1);
+    \path (I-1) edge node[edge label] {$20$} (H-1);
+    \path (I-2) edge node[edge label] {$20$} (H-1);
+    
+    \path (I-0) edge node[edge label] {$10$} (H-2);
+    \path (I-1) edge node[edge label] {$-20$} (H-2);
+    \path (I-2) edge node[edge label] {$-20$} (H-2);
+    
+    % Theta 2
+    \path (H-0) edge node[edge label] {$-10$} (O);
+    \path (H-1) edge node[edge label] {$20$} (O);
+    \path (H-2) edge node[edge label] {$20$} (O);
+\end{tikzpicture}
+\end{figure}
 
 \begin{table}[]
 \centering
