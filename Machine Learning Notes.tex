@@ -303,7 +303,14 @@ a_i^{(j)} = g(\Theta^{(j-1)} a^{(j-1)})
 for $i = 1, \ldots, s_j$, and at each layer we also add the bias unit $a_0^{(j)} := 0$. The output is $h_\Theta(x) = a^{(L)}$ (which may be multi-dimensional).
 
 \subsection{Multiclass classification}
-Given labels $\Set{1, \ldots, K}$, we model label $k$ as the unit coordinate vector for dimension $k$ - that is a vector with $1$ in dimension $k$, and $0$ in all other dimensions.
+Given labels $\Set{1, \ldots, K}$, we model label $k$ as the unit coordinate vector for dimension $k$, i.e. a vector with $1$ in dimension $k$, and $0$ in all other dimensions.
+
+For example, to represent $K = 3$ classes, we would use 
+\[
+1 \to \begin{pmatrix} 1 \\ 0 \\ 0 \end{pmatrix},
+2 \to \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix}, \text{ and }
+3 \to \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix} 
+\]
 
 \subsection{Examples of neural networks}
 As illustration of how neural networks can represent more advanced models than simple linear or logistic regression, we consider (approximate) representations of well-known binary operations.
