@@ -193,6 +193,7 @@ With too many features, the learned hypothesis may fit the training set very wel
 This can be addressed by reducing the number of features (manually or alorithmically), or via regularization. 
 
 \subsubsection{Regularization}
+\label{logistic-regularization}
 The idea is too keep all features, but reduce the magnitude of the parameters $\theta_j$. This works well when there are lots of features, each contributing a bit to predicting $y$.
 
 To achieve this, we \emph{penalize} the parameters inside the cost function.
@@ -286,6 +287,7 @@ The first layer is the actual \emph{input} to the model, the last layer the \emp
 \end{figure}
 
 \subsection{Forward propagation}
+\label{fwd-prop}
 \emph{Forward propagation} describes the method by which, given a trained neural network, we can compute predictions.
 
 Consider a neural network with $L$ layers, with $s_j$ units in layer $j$.
@@ -303,6 +305,7 @@ a_i^{(j)} = g(\Theta^{(j-1)} a^{(j-1)})
 for $i = 1, \ldots, s_j$, and at each layer we also add the bias unit $a_0^{(j)} := 0$. The output is $h_\Theta(x) = a^{(L)}$ (which may be multi-dimensional).
 
 \subsection{Multiclass classification}
+\label{nn-multiclass}
 Given labels $\Set{1, \ldots, K}$, we model label $k$ as the unit coordinate vector for dimension $k$, i.e. a vector with $1$ in dimension $k$, and $0$ in all other dimensions.
 
 For example, to represent $K = 3$ classes, we would use 
@@ -399,5 +402,18 @@ $x_1$ & $x_2$ & $a_1^{(2)}$ & $a_2^{(2)}$ & $h_{\Theta}(x)$ \\
 1 & 1 & 0 & 1 & 1 \\
 \end{tabular}
 \end{table}
+
+\subsection{Backpropogation}
+
+\begin{defn}[Cost function for Neural Network]
+Suppose we have $m$ training examples $x^{(i)}, \ldots, x^{(m)}$, and $K$ classes (so we represent the observed outputs as $y_i \in \Set{0, 1}^K$, as described in \S\ref{nn-multiclass}). Then the cost function is given by
+\begin{align*}
+J(\Theta) = &- \frac{1}{m} \left( \sum_{i=1}^{m} \sum_{k=1}^{K} y_k^{(i)} \log{h_{\Theta}(x^{(i)})_k} + (1 - y_k^{(i)}) \log{(1 - h_{\Theta}(x^{(i)})_k)} \right) \\
+&+ \frac{\lambda}{2m} \sum_{l = 1}^{L-1} \sum_{i=1}^{s_l} \sum_{j=1}^{s_{l+1}} ( \Theta_{i, j}^{(l)} )^2
+\end{align*}
+where $h_{\Theta}(x^{(i)})$ is the prediction as obtained by forward-propogation (described in \S\ref{fwd-prop}) for training example $i$, and $\lambda$ is the \emph{regularization parameter} (as in \S\ref{logistic-regularization}).
+\end{defn}
+
+The method of \emph{backpropogation} describes a way to compute the gradients $\frac{\partial J(\Theta)}{\partial \Theta_{ij}^{(l)}}$ so that we can apply an optimization algorithm (such as gradient-descent) to minimize $J(\Theta)$.
 
 \end{document}
