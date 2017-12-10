@@ -296,13 +296,12 @@ Let $x_1, \ldots, x_{s_0}$ be the training data, to which we add $x_0 := 1$. Set
 
 Let $\Theta^{(j)}$ be the parameters (weights) of the mapping between layers $j$ and $(j+1)$, so that the $i\textsuperscript{th}$ row of $\Theta^{(j)}$ is the logistic regression parameters for the $i\textsuperscript{th}$ unit in layer $(j+1)$. Thus $\Theta^{(j)}$ is of dimension $s_{j+1} \times (s_{j} + 1)$.
 
-The \emph{activation} of unit $i$ in layer $j$, is given by
-
-\[
-a_i^{(j)} = g(\Theta^{(j-1)} a^{(j-1)})
-\]
-
-for $i = 1, \ldots, s_j$, and at each layer we also add the bias unit $a_0^{(j)} := 0$. The output is $h_\Theta(x) = a^{(L)}$ (which may be multi-dimensional).
+The \emph{activations} of the units in layer $j$ is given by the $s_j$ dimensional vector $a^{(j)}$ where
+\begin{align*}
+z^{(j)} &= \Theta^{(j-1)} a^{(j-1)} \\
+a^{(j)} &= g(z^{(j)})
+\end{align*}
+and at each layer we also add the bias unit $a_0^{(j)} := 0$. The output is $h_\Theta(x) = a^{(L)}$ (which may be multi-dimensional).
 
 \subsection{Multiclass classification}
 \label{nn-multiclass}
@@ -403,7 +402,7 @@ $x_1$ & $x_2$ & $a_1^{(2)}$ & $a_2^{(2)}$ & $h_{\Theta}(x)$ \\
 \end{tabular}
 \end{table}
 
-\subsection{Backpropogation}
+\subsection{BackpropAgation}
 
 \begin{defn}[Cost function for Neural Network]
 Suppose we have $m$ training examples $x^{(i)}, \ldots, x^{(m)}$, and $K$ classes (so we represent the observed outputs as $y_i \in \Set{0, 1}^K$, as described in \S\ref{nn-multiclass}). Then the cost function is given by
@@ -411,9 +410,37 @@ Suppose we have $m$ training examples $x^{(i)}, \ldots, x^{(m)}$, and $K$ classe
 J(\Theta) = &- \frac{1}{m} \left( \sum_{i=1}^{m} \sum_{k=1}^{K} y_k^{(i)} \log{h_{\Theta}(x^{(i)})_k} + (1 - y_k^{(i)}) \log{(1 - h_{\Theta}(x^{(i)})_k)} \right) \\
 &+ \frac{\lambda}{2m} \sum_{l = 1}^{L-1} \sum_{i=1}^{s_l} \sum_{j=1}^{s_{l+1}} ( \Theta_{i, j}^{(l)} )^2
 \end{align*}
-where $h_{\Theta}(x^{(i)})$ is the prediction as obtained by forward-propogation (described in \S\ref{fwd-prop}) for training example $i$, and $\lambda$ is the \emph{regularization parameter} (as in \S\ref{logistic-regularization}).
+where $h_{\Theta}(x^{(i)})$ is the prediction as obtained by forward-propagation (described in \S\ref{fwd-prop}) for training example $i$, and $\lambda$ is the \emph{regularization parameter} (as in \S\ref{logistic-regularization}).
 \end{defn}
 
-The method of \emph{backpropogation} describes a way to compute the gradients $\frac{\partial J(\Theta)}{\partial \Theta_{ij}^{(l)}}$ so that we can apply an optimization algorithm (such as gradient-descent) to minimize $J(\Theta)$.
+The method of \emph{backpropagation} describes a way to compute the gradients $\frac{\partial J(\Theta)}{\partial \Theta_{ij}^{(l)}}$ so that we can apply an optimization algorithm (such as gradient-descent) to minimize $J(\Theta)$.
+
+Intuitively, we run a forward pass (\S\ref{fwd-prop}) to compute the activations throughout the network, then for each node $j$ in layer $l$ we compute an \emph{error term} $\delta_j^{(l)}$ that measures how much that node was `responsible' for errors in the output. For the output layer, this can simply be the distance between $h(x)$ and $y$, while for the hidden layers we can take a weighted (by $\Theta$) averaged of the errors in the following layer.
+
+\begin{defn}[Backpropagation Algorithm] 
+For a given training example $x^{(t)}$, we compute the gradient as follows:
+
+\begin{enumerate}
+\item Set the input layer $a^{(1)} := x^{(t)}$.
+\item Perform forward propagation to compute the activations $(z^{(j)}, a^{(j)})$ for layers $2, \ldots, L$.
+\item For the output layer $L$, compute $\delta^{(L)} = a^{(L)} - y$, where $y$ is as in \S\ref{nn-multiclass}.
+\item For layers $l = L-1, \ldots, 2$, compute $\delta^{(l)} = (\Theta^{(l)} )^T \delta^{(l+1)} \odot g'(z^{(l)})$, where $g'(z^{(l)}) = a^{(l)} \odot (1 - a^{(l)})$. \footnote{Here I am using the notation $\odot$ to mean element-wise multiplication (i.e. $.*$ in Matlab).}
+\item Accumulate $\Delta^{(l)} := \Delta^{(l)} + \delta^{(l+1)} (a^{(l)})^T$.
+\end{enumerate}
+Finally, we have
+\[
+\frac{\partial J(\Theta)}{\partial \Theta_{i,j}^{(l)}} = 
+\begin{cases}
+\frac{1}{m} \left( \Delta_{i,j}^{(l)}  + \lambda \Theta_{i, j}^{(l)} \right) & \text{for } j \neq 0 \\
+\frac{1}{m} \Delta_{i,j}^{(l)}  & \text{for } j = 0
+\end{cases}
+\]
+\end{defn}
+
+\subsubsection{Gradient checking}
+It can be helpful in debugging to check the gradient computed in backpropagation against a numerical approximation, for example using the symmetric difference quotient $f(x+h)-f(x-h) \over 2h$ in each dimension of $\Theta$, and comparing to the gradient from backpropagation which should be similar.
+
+\subsubsection{Random initialization}
+The initial parameters must be randomly initialized because if otherwise we started at $\Theta = 0$ uniformly then by symmetry the parameters in each layer would remain equal on every iteration.
 
 \end{document}
