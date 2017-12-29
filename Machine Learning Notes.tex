@@ -8,6 +8,7 @@
 \usepackage{enumitem}
 \usepackage[justification=centering]{caption}
 \usepackage{tikz}
+\usepackage{multirow}
 
 \theoremstyle{definition}
 \newtheorem*{theorem}{Theorem}
@@ -402,7 +403,7 @@ $x_1$ & $x_2$ & $a_1^{(2)}$ & $a_2^{(2)}$ & $h_{\Theta}(x)$ \\
 \end{tabular}
 \end{table}
 
-\subsection{BackpropAgation}
+\subsection{Backpropagation}
 
 \begin{defn}[Cost function for Neural Network]
 Suppose we have $m$ training examples $x^{(i)}, \ldots, x^{(m)}$, and $K$ classes (so we represent the observed outputs as $y_i \in \Set{0, 1}^K$, as described in \S\ref{nn-multiclass}). Then the cost function is given by
@@ -442,5 +443,59 @@ It can be helpful in debugging to check the gradient computed in backpropagation
 
 \subsubsection{Random initialization}
 The initial parameters must be randomly initialized because if otherwise we started at $\Theta = 0$ uniformly then by symmetry the parameters in each layer would remain equal on every iteration.
+
+\section{Tuning and evaluating}
+\subsection{Cross-validation}
+\label{cross-validation}
+A common approach is to split the available data into 3 sets: training, (cross-)validation, and test data (often at a roughly 60-20-20 ratio). When a model has further parameters (other than $\theta$) to be chosen, such as the dimension of a polynomial model or the regularization parameter $\lambda$, then for a specific choice of such parameters we can train the model on the \emph{training data}. We can do this for a range of possible parameters, then choose which has the lower error (e.g. squared loss) on the \emph{cross-validation} data. Finally, we can evaluate the overall choice of model by computing the error on the \emph{test data}.
+
+\subsection{Bias-Variance Tradeoff}
+\begin{enumerate}
+\item High \emph{bias} refers to a false assumption in the model (e.g. due to too \emph{low} a degree polynomial) and causes \emph{underfitting}. It manifests as high and similiar training and cross-validation error. We may try
+\begin{enumerate}[label=(\alph*)]
+\item adding further features;
+\item decreasing $\lambda$.
+\end{enumerate}
+\item High \emph{variance} refers to an oversensitivity to small changes in the training data (e.g. due to too \emph{high} a degree polynomial) and causes \emph{overfitting}. It manifests as low training error but high cross-validation error. We may try 
+\begin{enumerate}[label=(\alph*)]
+\item using a smaller set of features;
+\item getting more training examples;
+\item increasing $\lambda$.
+\end{enumerate}
+\end{enumerate}
+
+Of course, $\lambda$ may be chosen as in \S\ref{cross-validation} by trying a range of values on the training data and choosing that which performs best on the cross-validation data (note that the regularization parameter should not be used in evaluating the cross-validation error).
+
+Generally, it's best to start with a simple model, implement it quickly, and investigate the error to diagnose whether it may be suffering from high bias or variance.
+
+\subsection{Precision and recall}
+For a binary classification problem, we have a tradeoff between precision and recall (a.k.a. sensitivity), where
+\[
+\begin{array}{rcccl}
+\text{precision} &=& \frac{\text{true positives}}{\text{predicted positives}} &=& \frac{\text{true positives}}{\text{true positives} + \text{false positives}} \\
+\text{recall} &=& \frac{\text{true positives}}{\text{actual positives}} &=& \frac{\text{true positives}}{\text{true positives} + \text{false negatives}} 
+\end{array} 
+\]
+and true/false positives/negatives are defined as in Table \ref{type-I-II-errors}.
+
+\begin{table}[]
+\centering
+\caption{Type I and Type II Errors}
+\label{type-I-II-errors}
+\begin{tabular}{|c|c|c|c|}
+\hline
+                           & \multicolumn{3}{c|}{Actual}           \\ \hline
+\multirow{3}{*}{Predicted} &     & $1$            & $0$            \\ \cline{2-4} 
+                           & $1$ & true positive  & false positive \\ \cline{2-4} 
+                           & $0$ & false negative & true negative  \\ \hline
+\end{tabular}
+\end{table}
+
+For example in the case of medical diagnosis, we might want to only diagnose if truly confident so as to avoid putting a patient through unnecessary stress (high precision), whereas we might also want to avoid missing dangerous cases (high recall).
+
+\subsubsection{$F_1$ score}
+The harmonic mean of precision (P) and recall (R) can be a useful comparison,
+\[ F_1 = 2 \frac{PR}{P + R} \]
+which has its best value at $1$ and worst at $0$.
 
 \end{document}
