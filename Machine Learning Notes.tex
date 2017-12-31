@@ -43,6 +43,7 @@
 \renewcommand{\vec}[1]{\mathbf{#1}}
 \newcommand{\gv}[1]{\ensuremath{\mbox{\boldmath$ #1 $}}} % for vectors of Greek letters
 \newcommand{\grad}[1]{\gv{\nabla} #1} % for gradient
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \let\divsymb=\div % rename builtin command \div to \divsymb
 \renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}}
 
@@ -135,6 +136,7 @@ The minimum of the cost function can also be found analytically (solve the syste
 in the cast where $(X^T X)$ is invertible. Even in the singular case, we can take a numerical solution with the pseudo-inverse, e.g. via the Octave function \verb!pinv!. The singular case can occur when there are redundant (linearly dependent) features, or too many features ($m \leq n$).
 
 \section{Logistic Regression - Classification}
+\label{logistic-regression}
 We now restrict $y \in \Set{0, 1}^{m}$ so that we now have the problem of \emph{classifying} an observation $x$.
 
 \begin{defn}[Classification hypothesis]
@@ -148,7 +150,7 @@ where $g(z)$ is the \emph{sigmoid} function, so that $0 \leq h_{\theta}(x) \leq 
 h_{\theta}(x) &= \Pr_{\theta}(y = 1 \given x) \\
 &= \Pr(y = 1 \given x, \theta)
 \end{align*}
-and `predict' that $y = 1$ if $h_{\theta}(x) >= 0.5$, i.e. if $\theta^{T} x >= 0$. The surface $h_{\theta}(x) = 0.5$ is known as the \emph{decision boundary}.
+and `predict' that $y = 1$ if $h_{\theta}(x) \ge 0.5$, i.e. if $\theta^{T} x \ge 0$. The surface $h_{\theta}(x) = 0.5$ is known as the \emph{decision boundary}.
 \end{defn}
 
 The squared loss cost function is not convex in the case of logistic regression, we instead use the logistic cost function. 
@@ -497,5 +499,58 @@ For example in the case of medical diagnosis, we might want to only diagnose if 
 The harmonic mean of precision (P) and recall (R) can be a useful comparison,
 \[ F_1 = 2 \frac{PR}{P + R} \]
 which has its best value at $1$ and worst at $0$.
+
+\section{Support Vector Machines}
+The Support Vector Machine (SVM) has a cost function that is similar to that of logistic regression (in \S\ref{logistic-regression}), with
+$J(\theta) = \frac{1}{m} \sum_{i=1}^{m} \mathrm{Cost}(\theta^T x^{(i)}, y^{(i)}) + \frac{\lambda}{2m} \sum_{j=1}^{n} \theta_j^2$ except that now
+\begin{align*}
+\mathrm{Cost}(z, y) & = 
+\begin{cases}
+\max{(0, 1-z)} & \text{for } y = 1 \\
+\max{(0, 1+z)} & \text{for } y = 0
+\end{cases} \\
+& = \max{(0, 1 + (1-2y)z)}
+\end{align*}
+Note that there is zero cost for $z \ge 1$ when $y = 1$ or $z \le -1$ when $y = 0$, compared to logistic regression in which for $y = 1$ the cost was strictly positive, but asymptotically vanishing for $z \gg 0$ (and similarly for $y = 0$, $z \ll 0$). Again, we predict $h_{\theta}(x) = 1$ iff $\theta^T x \ge 0$.
+
+Conventionally, we use a different scaling, and so take 
+\begin{equation}
+\label{svm-cost}
+J(\theta) = C \sum_{i=1}^{m} \mathrm{Cost}(\theta^T x^{(i)}, y^{(i)}) + \frac{1}{2} \sum_{j=1}^{n} \theta_j^2
+\end{equation}
+where $C$ is now playing the opposite role to $\lambda$.
+
+\subsection{Large Margin Classification}
+The SVM is known as a \emph{large margin classifier} meaning that in the linearly separable case (and for large $C$) the decision boundary divides the two classes whilst maximizing the distance to the nearest data point in each class - i.e. maximizing the margin. The parameter $C$ determines the tradeoff between maximizing the margin and ensuring the training data are correctly classified. Smaller values of $C$ make the SVM less susceptible to outliers (and therefore not strictly a large margin classifier).
+
+\subsubsection{Intuition}
+Consider $x \in \R^{n}$. The two parallel hyperplanes defining the margin (of which the decision boundary is in the middle) can be described by
+\begin{align*}
+\theta \cdot x - b &= 1 \\
+\theta \cdot x - b &= -1
+\end{align*}
+where $\theta$ is the normal vector to the hyperplane (and $b = -\theta_0$), so the condition that points lie on the correct side of the margin is
+\[
+\begin{cases}
+\theta \cdot x - b \ge 1 & \text{for } y = 1 \\
+\theta \cdot x - b \le -1 & \text{for } y = 0.
+\end{cases}
+\]
+The distance between the hyperplanes is $\frac{2}{\norm{\theta}}$, so is maximized by minimizing $\norm{\theta}$. Note that $\mathrm{Cost}(\theta \cdot x, y)$ is zero if $x$ satisfies these conditions and assigns a cost proportional to the distance from the margin if not. Thus we recover the optimization objective \eqref{svm-cost}.
+
+\subsection{Generalizations}
+The standard SVM only provides a linear decision boundary. However, we can map to a transformed (and higher dimensional) feature space, such that we learn a non-linear classifier in the input space. 
+
+\subsubsection{Kernels}
+A common technique involves choosing `landmark' points $l^{(1)}, l^{(2)}, l^{(3)}, \ldots$, which we may take to be $x^{(1)}, \ldots, x^{(m)}$. For each input feature $x \in \R^n$ we then have a transformed feature $f \in \R^m$ given by
+\begin{align*}
+f_i &= k(x, l^{(i)}) \\
+&= \exp{\left( - \frac{1}{2 \sigma^2} \norm{x - l^{(i)}}^2 \right)}
+\end{align*}
+which represents the `similarity' between the point and each landmark. The function $k$ is known as the Gaussian kernel. The linear SVM can then be trained on this new feature space, and we predict $h_{\theta}(x) = 1$ if $\theta^T f \ge 0$.
+
+The parameter $\sigma^2$ can tune the transformation: larger $\sigma^2$ make the features vary more smoothly so leads to higher bias and lower variance.
+
+Other kernels may also be used, such as the polynomial kernel $k(x, y) = (x^T y + c)^d$. In practice, a linear kernel (or logistic regression) should perform fine for large $n$, while for intermediate-sized $m$ (say between 10 and 10,000) and small $n$ the Gaussian kernel can be effective.
 
 \end{document}
