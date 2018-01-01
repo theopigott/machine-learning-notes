@@ -553,4 +553,28 @@ The parameter $\sigma^2$ can tune the transformation: larger $\sigma^2$ make the
 
 Other kernels may also be used, such as the polynomial kernel $k(x, y) = (x^T y + c)^d$. In practice, a linear kernel (or logistic regression) should perform fine for large $n$, while for intermediate-sized $m$ (say between 10 and 10,000) and small $n$ the Gaussian kernel can be effective.
 
+\section{Clustering}
+The \emph{clustering} problem is an \emph{unsupervised} learning problem: given an \emph{unlabelled} training set $\Set{x^{(1)}, \ldots, x^{(m)}}$ with $x^{(i)} \in \R^n$, the task is to assign each point one of $K$ clusters, where `similar' examples should be assigned to the same cluster.
+
+\subsection{K-means}
+In {K-means}, each cluster is defined by a \emph{centroid} $\mu_j$ (for $1 \le j \le K$), and a point $x^{(i)}$ is assigned to the cluster $c^{(i)}$ (for $1 \le i \le m$) associated with the nearest centroid. The idea is to minimize the average distance between each point and it's associated centroid, thus the optimization objective is
+\[
+J(c^{(1)}, \ldots, c^{(m)}, \mu_1, \ldots, \mu_K) = \frac{1}{m} \sum_{i=1}^{m} \norm{x^{(i)} - \mu_{c^{(i)}}}^2
+\]
+
+\subsubsection{Algorithm}
+
+Given an initial set of centroid $\mu_1, \ldots, \mu_K$, the K-means algorithm repeatedly alternates between two steps:
+\begin{description}
+\item[Assignment] Assign each example to the nearest centroid. That is, for each $1 \le i \le m$, set $c^{(i)}$ to be $j$ that minimizes $\norm{x^{(i)} - \mu_j}$.
+\item[Update] Change each cluster centroid to be the mean of all points assigned to it. That is, for each $1 \le j \le K$, if $C_k = \Set{i : c^{(i)} = j}$ is the set of examples in cluster $j$, then set $\mu_j = \frac{1}{|C_k|} \sum_{i \in C_k} x^{(i)}$.
+\end{description}
+and converges when the assignments no longer change.
+
+\subsubsection{Choosing input parameters}
+
+The initial centroids are usually taken to be a random choice of $K$ training examples. Note that the algorithm is not guaranteed to converge to the true optimum, so best practice is to repeatedly try with different random initializations and choose the clusters minimizing the cost.
+
+The number of clusters may be chosen using information from the problem domain if possible, e.g. you may know that you want to group customers into 3 groups by clothes size. Otherwise, the `elbow method' may be used: choose the number of clusters such that adding another doesn't significantly improve the model. This manifests itself as a sudden leveling-off if you plot cost $J$ against $K$, reminiscent of an elbow shape.
+
 \end{document}
