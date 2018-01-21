@@ -563,7 +563,6 @@ J(c^{(1)}, \ldots, c^{(m)}, \mu_1, \ldots, \mu_K) = \frac{1}{m} \sum_{i=1}^{m} \
 \]
 
 \subsubsection{Algorithm}
-
 Given an initial set of centroid $\mu_1, \ldots, \mu_K$, the K-means algorithm repeatedly alternates between two steps:
 \begin{description}
 \item[Assignment] Assign each example to the nearest centroid. That is, for each $1 \le i \le m$, set $c^{(i)}$ to be $j$ that minimizes $\norm{x^{(i)} - \mu_j}$.
@@ -572,9 +571,42 @@ Given an initial set of centroid $\mu_1, \ldots, \mu_K$, the K-means algorithm r
 and converges when the assignments no longer change.
 
 \subsubsection{Choosing input parameters}
-
 The initial centroids are usually taken to be a random choice of $K$ training examples. Note that the algorithm is not guaranteed to converge to the true optimum, so best practice is to repeatedly try with different random initializations and choose the clusters minimizing the cost.
 
 The number of clusters may be chosen using information from the problem domain if possible, e.g. you may know that you want to group customers into 3 groups by clothes size. Otherwise, the `elbow method' may be used: choose the number of clusters such that adding another doesn't significantly improve the model. This manifests itself as a sudden leveling-off if you plot cost $J$ against $K$, reminiscent of an elbow shape.
+
+\section{Dimensionality Reduction}
+The technique of \emph{dimensionality reduction} can be employed both for \emph{data compression} (to speed up learning algorithms) and to aid \emph{visualization} (by reducing to $2$ or $3$ dimensions). Note that dimensionality reduction is not always needed, and is not an appropriate solution to overfitting (regularization should be used instead).
+
+\subsection{Principal Component Analysis}
+PCA describes a technique for reducing points in $\R^{n}$ to points in $\R^{k}$ by projecting onto the space spanned by $k$ vectors $\Set{u^{(1)}, \ldots, u^{(k)}}$ such that the \emph{projection error} is minimized. The projection error is the squared distance between a point and its `estimate'. For example, in the case of reducing $\R^2$ to $\R$ it is the perpendicular distance between the point $x$ and the line $u$ (as opposite to the vertical distance, as in linear regression).
+
+\subsubsection{Singular Value Decomposition}
+SVD decomposes the $m \times n$ matrix $X$ into
+\[
+X = U \Sigma V^T
+\]
+where
+\begin{itemize}
+\item $U$ is an $m \times n$ orthogonal matrix with linearly independent columns.
+\item $\Sigma$ is a positive $n \times n$ diagonal matrix with $\sigma_{1} \geq \ldots \geq \sigma_{n}$.
+\item $V^T$ is a $n \times n$ orthogonal matrix.
+\end{itemize}
+That is, we represent the point $x_i$ as the linear combination $\sum_{j = 1}^{n} u_{ij} \sigma_{j} \bar{v}_j$.
+
+For PCA, we simply cut off the SVD at dimension $k$, so $x_{i} \approx \sum_{j = 1}^{k} u_{ij} \sigma_{j} \bar{v}_j$. The lower-dimensional representation is obtained from the truncated matrix $U_{k}$ via $z_i =  U_{k}^T x_i$. The `reconstructed' point is given by $U_{k} z_i$ with the projection error being the squared distance between this and the original $x_i$. Note that the diagonal entries in $\Sigma$ represent the variance, so we are cutting off the dimensions with low variance. 
+
+\subsubsection{Preprocessing}
+Feature scaling and mean normalization should be applied before carrying out PCA.
+
+\subsubsection{Choosing $k$}
+Typically, we choose $k$ to be the smallest value such that 
+\[
+\frac{\frac{1}{m} \sum_{i=1}^{m} \| x^{(i)} - x^{(i)}_{\text{approx}} \|}{\frac{1}{m} \sum_{i=1}^{m} \| x^{(i)} \|} \leq p
+\]
+where the numerator is the \emph{average squared projection error}, the denominator is the \emph{total variation} in the data, and we typically interpret the condition by saying that (1-p) (e.g. $99\%$) of the variance is retained (or explained). Using SVD, this is equivalent to choosing the minimum $k$ such that 
+\[
+\frac{\sum_{i=1}^{k} \sigma_i}{\sum_{i=1}^{m} \sigma_i} \geq 1- p
+\]
 
 \end{document}
